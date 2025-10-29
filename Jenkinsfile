@@ -9,7 +9,7 @@ pipeline {
         sh 'echo Checkout stage passed'
         checkout([$class: 'GitSCM', 
                   branches: [[name: 'main']], 
-                  userRemoteConfigs: [[url: 'https://github.com/arup07/node-demo-app']]])
+                  userRemoteConfigs: [[url: 'https://github.com/arup07/node-demo-app-tf-cicd']]])
       }
     }
 
@@ -32,7 +32,7 @@ pipeline {
     stage('Static Code Analysis - SonarQube') {
       agent { docker { image 'node:20-alpine'; args '--user root' } }
       environment {
-        SONAR_URL = "http://YOUR_SONARQUBE_IP:9000"  // Update with your SonarQube URL
+        SONAR_URL = "http://18.139.223.229:9000"  // Update with your SonarQube URL
       }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
