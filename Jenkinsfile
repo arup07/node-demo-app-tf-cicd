@@ -92,6 +92,14 @@ pipeline {
             git config user.email "arup221199@gmail.com"
             git config user.name "${GIT_USER_NAME}"
 
+            # Check if deployment.yaml exists
+            if [ ! -f deployment.yaml ]; then
+              echo "⚠️  deployment.yaml not found in ${GIT_REPO_NAME} repository"
+              echo "Please create the Kubernetes deployment manifest first"
+              rm -rf $TEMP_DIR
+              exit 1
+            fi
+
             # Replace the image tag in deployment.yaml
             sed -i "s#\\(arup07/node-demo-app:\\).*#\\1${DOCKER_IMAGE_TAG}#g" deployment.yaml
 
@@ -116,7 +124,7 @@ pipeline {
       script {
         // Clean workspace only if we have a node context
         try {
-          node('any') {
+          node {
             echo 'Cleaning up workspace...'
             cleanWs()
           }
