@@ -30,22 +30,19 @@ pipeline {
     }
 
     stage('Static Code Analysis - SonarQube') {
-      agent { docker { image 'node:20-alpine'; args '--user root' } }
+      agent { docker { image 'sonarsource/sonar-scanner-cli:latest'; args '--user root' } }
       environment {
         SONAR_URL = "http://18.139.223.229:9000"  // Update with your SonarQube URL
       }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
-            # Install SonarQube Scanner
-            npm install -g sonarqube-scanner
-            
             # Run SonarQube scan
             sonar-scanner \
               -Dsonar.projectKey=node-demo-app \
               -Dsonar.sources=. \
               -Dsonar.host.url=${SONAR_URL} \
-              -Dsonar.login=${SONAR_AUTH_TOKEN} \
+              -Dsonar.token=${SONAR_AUTH_TOKEN} \
               -Dsonar.exclusions=node_modules/**,tests/**
           '''
         }
@@ -115,16 +112,25 @@ pipeline {
   } // stages
 
   post {
+    always {
+      script {
+        // Clean workspace only if we have a node context
+        try {
+          node('any') {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+          }
+        } catch (Exception e) {
+          echo "Workspace cleanup skipped: ${e.message}"
+        }
+      }
+    }
     success {
       echo '✅ Pipeline completed successfully!'
       echo "Docker Image: arup07/node-demo-app:${BUILD_NUMBER}"
     }
     failure {
       echo '❌ Pipeline failed!'
-    }
-    always {
-      echo 'Cleaning up workspace...'
-      cleanWs()
     }
   }
 }
